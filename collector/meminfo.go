@@ -22,8 +22,7 @@ func init() {
 func newMemCollector() (Collector, error) {
 	c := &memCollector{
 		memTotal: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, memCollectorSubsystem, "total",
-			),
+			prometheus.BuildFQName(namespace, memCollectorSubsystem, "total"),
 			"",
 			[]string{"uuid"}, nil),
 		memUsed: prometheus.NewDesc(
