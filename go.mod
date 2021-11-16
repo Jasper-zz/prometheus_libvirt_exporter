@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/libvirt/libvirt-go v7.0.0+incompatible
-	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
