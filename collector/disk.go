@@ -96,8 +96,16 @@ func (c *diskCollector) Update(ch chan<- prometheus.Metric, stats *libvirt.Domai
 	}
 	if rs.GuestExec {
 		execArg := qga.GuestExecArg{
-			Path:          "/usr/bin/df",
-			Arg:           []string{"--output=source,fstype,target,itotal,iavail,size,avail"},
+			Path: "/usr/bin/df",
+			Arg: []string{
+				"-x", "devtmpfs",
+				"-x", "tmpfs",
+				"-x", "shm",
+				"-x", "overlay",
+				"-x", "cgroup",
+				"-x", "proc",
+				"-x", "procfs",
+				"--output=source,fstype,target,itotal,iavail,size,avail"},
 			CaptureOutput: true,
 		}
 		execRet, err := qga.Exec(stats.Domain, execArg)

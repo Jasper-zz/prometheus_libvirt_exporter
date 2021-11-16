@@ -26,7 +26,7 @@ func GetFilesystem(data []byte) ([]filesystemStats, error) {
 	for scanner.Scan() {
 		partsNum := []int64{}
 		parts := strings.Fields(scanner.Text())
-		if !strings.HasPrefix(parts[0], "/dev/v") {
+		if strings.HasPrefix(parts[0], "Filesystem") || strings.HasPrefix(parts[0], "/dev/dm") {
 			continue
 		}
 		if len(parts) < 7 {
