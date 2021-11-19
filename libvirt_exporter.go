@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"path"
-	"net/http"
-	"prometheus_libvirt_exporter/collector"
-	"runtime"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
+	"path"
+	"prometheus_libvirt_exporter/collector"
+	"runtime"
+	"sort"
 )
 
 var (
@@ -41,12 +42,28 @@ var (
 )
 
 type handler struct {
-	logger logrus.Logger
+	exporterMetricsRegistry *prometheus.Registry
+	unfilteredHandler       http.Handler
+	logger                  logrus.Logger
 }
 
 func newHandler(logger logrus.Logger) *handler {
 	h := &handler{
-		logger: logger,
+		exporterMetricsRegistry: prometheus.NewRegistry(),
+		logger:                  logger,
+	}
+
+	if *includeExporterMetrics {
+		h.exporterMetricsRegistry.MustRegister(
+			prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+			prometheus.NewGoCollector(),
+		)
+	}
+
+	if innerHandler, err := h.innerHandler(); err != nil {
+		panic(fmt.Sprintf("Couldn't create metrics handler: %s", err))
+	} else {
+		h.unfilteredHandler = innerHandler
 	}
 
 	return h
@@ -54,33 +71,58 @@ func newHandler(logger logrus.Logger) *handler {
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
-	if len(filters) != 0 {
-		h.logger.Info("collect filters:", filters)
+	h.logger.Debug("collect query: ", filters)
+
+	if len(filters) == 0 {
+		h.unfilteredHandler.ServeHTTP(w, r)
+		return
 	}
 
-	le, err := collector.NewLibvirtExporter(*libvirtURI, h.logger, filters...)
+	filteredHandler, err := h.innerHandler(filters...)
 	if err != nil {
-		h.logger.Errorf("could't create collcetor: %s", err)
+		h.logger.Infof("Couldn't create filtered metrics handler: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("Couldn't create filtered metrics handler: %s", err)))
+		return
 	}
 
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(le)
+	filteredHandler.ServeHTTP(w, r)
+}
+
+func (h *handler) innerHandler(filters ...string) (http.Handler, error) {
+	lc, err := collector.NewLibvirtCollector(*libvirtURI, h.logger, filters...)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create collector: %s", err)
+	}
+
+	if len(filters) == 0 {
+		h.logger.Info("msg=Enabled_collectors")
+		collectors := []string{}
+		for n := range lc.Collectors {
+			collectors = append(collectors, n)
+		}
+		sort.Strings(collectors)
+		for _, c := range collectors {
+			h.logger.Info("collector=", c)
+		}
+	}
+
+	r := prometheus.NewRegistry()
+	r.MustRegister(version.NewCollector("libvirt_exporter"))
+	if err := r.Register(lc); err != nil {
+		return nil, fmt.Errorf("couldn't register libvirt collector: %s", err)
+	}
+
 	handler := promhttp.HandlerFor(
-		prometheus.Gatherers{registry},
+		prometheus.Gatherers{h.exporterMetricsRegistry, r},
 		promhttp.HandlerOpts{
 			ErrorHandling:       promhttp.ContinueOnError,
 			MaxRequestsInFlight: *maxRequests,
+			Registry:            h.exporterMetricsRegistry,
 		},
 	)
 
-	if *includeExporterMetrics {
-		registry.MustRegister(
-			prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
-			prometheus.NewGoCollector(),
-		)
-	}
-
-	handler.ServeHTTP(w, r)
+	return handler, nil
 }
 
 func main() {

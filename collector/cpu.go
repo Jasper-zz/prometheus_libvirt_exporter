@@ -16,9 +16,9 @@ type cpuCollector struct {
 	cpuSystemTime    *prometheus.Desc
 	cpuCpuTime       *prometheus.Desc
 	cpuUserTime      *prometheus.Desc
-	cpuload1         *prometheus.Desc
-	cpuload5         *prometheus.Desc
-	cpuload15        *prometheus.Desc
+	cpuLoad1         *prometheus.Desc
+	cpuLoad5         *prometheus.Desc
+	cpuLoad15        *prometheus.Desc
 	qgaCpuSystemTime *prometheus.Desc
 	qgaCpuCpuTime    *prometheus.Desc
 	qgaCpuUserTime   *prometheus.Desc
@@ -44,15 +44,15 @@ func newCPUCollector() (Collector, error) {
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "cpu_time"),
 			"",
 			[]string{"uuid"}, nil),
-		cpuload1: prometheus.NewDesc(
+		cpuLoad1: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "load1"),
 			"",
 			[]string{"uuid"}, nil),
-		cpuload5: prometheus.NewDesc(
+		cpuLoad5: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "load5"),
 			"",
 			[]string{"uuid"}, nil),
-		cpuload15: prometheus.NewDesc(
+		cpuLoad15: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "load15"),
 			"",
 			[]string{"uuid"}, nil),
@@ -136,15 +136,15 @@ func (c *cpuCollector) Update(ch chan<- prometheus.Metric, stats *libvirt.Domain
 			return err
 		}
 		//fmt.Printf("%+v\n", l)
-		ch <- prometheus.MustNewConstMetric(c.cpuload1,
+		ch <- prometheus.MustNewConstMetric(c.cpuLoad1,
 			prometheus.GaugeValue,
 			float64(l[0]),
 			uuid)
-		ch <- prometheus.MustNewConstMetric(c.cpuload5,
+		ch <- prometheus.MustNewConstMetric(c.cpuLoad5,
 			prometheus.GaugeValue,
 			float64(l[1]),
 			uuid)
-		ch <- prometheus.MustNewConstMetric(c.cpuload15,
+		ch <- prometheus.MustNewConstMetric(c.cpuLoad15,
 			prometheus.GaugeValue,
 			float64(l[2]),
 			uuid)

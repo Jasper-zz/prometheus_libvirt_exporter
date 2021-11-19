@@ -3,12 +3,11 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
-	"time"
-
 	"github.com/libvirt/libvirt-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"sync"
+	"time"
 )
 
 const namespace = "libvirt"
@@ -51,7 +50,7 @@ type Collector interface {
 	Update(ch chan<- prometheus.Metric, dom *libvirt.DomainStats, uuid string, rs rpcSet) error
 }
 
-type LibvirtExporter struct {
+type LibvirtCollector struct {
 	Uri        string
 	Collectors map[string]Collector
 	logger     logrus.Logger
@@ -66,7 +65,7 @@ func registerCollector(collector string, factory func() (Collector, error)) {
 	factories[collector] = c
 }
 
-func NewLibvirtExporter(uri string, logger logrus.Logger, filters ...string) (*LibvirtExporter, error) {
+func NewLibvirtCollector(uri string, logger logrus.Logger, filters ...string) (*LibvirtCollector, error) {
 	collectors := make(map[string]Collector)
 	if len(filters) == 0 {
 		collectors = factories
@@ -80,19 +79,19 @@ func NewLibvirtExporter(uri string, logger logrus.Logger, filters ...string) (*L
 		}
 	}
 
-	return &LibvirtExporter{
+	return &LibvirtCollector{
 		Uri:        uri,
 		Collectors: collectors,
 		logger:     logger,
 	}, nil
 }
 
-func (l *LibvirtExporter) Describe(ch chan<- *prometheus.Desc) {
+func (l *LibvirtCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- scrapeDurationDesc
 	ch <- scrapeSuccessDesc
 }
 
-func (l *LibvirtExporter) excute(ch chan<- prometheus.Metric, domStats libvirt.DomainStats) {
+func (l *LibvirtCollector) excute(ch chan<- prometheus.Metric, domStats libvirt.DomainStats) {
 	var success float64
 	begin := time.Now()
 	uuid, _ := domStats.Domain.GetUUIDString()
@@ -120,7 +119,7 @@ func (l *LibvirtExporter) excute(ch chan<- prometheus.Metric, domStats libvirt.D
 	ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, success, uuid)
 }
 
-func (l *LibvirtExporter) Collect(ch chan<- prometheus.Metric) {
+func (l *LibvirtCollector) Collect(ch chan<- prometheus.Metric) {
 	conn, err := libvirt.NewConnect(l.Uri)
 	if err != nil {
 		l.logger.Fatalf("failed to connect to %s.", l.Uri)
