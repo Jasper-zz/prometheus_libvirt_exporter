@@ -4,7 +4,7 @@ Prometheus exporter for vm metrics written in Go with pluggable metric collector
 
 ## Installation and Usage
 
-If you are new to Prometheus and `libvirt_exporter` there is a [simple step-by-step guide](https://prometheus.io/docs/guides/node-exporter/).
+If you are new to Prometheus there is a [simple step-by-step guide](https://prometheus.io/docs/guides/node-exporter/).
 
 The `libvirt_exporter` listens on HTTP port 9108 by default. See the `--help` output for more options.
 
@@ -32,7 +32,7 @@ For Docker compose, similar flag changes are needed.
 version: '3.8'
 
 services:
-  node_exporter:
+  libvirt_exporter:
     image: prom/prometheus-libvirt-exporter:2.0.1
     container_name: libvirt_exporter
     network_mode: host
@@ -64,7 +64,7 @@ The tablesbelow list all existing collectors.
 
 The `libvirt_exporter` will expose all metrics from enabled collectors by default.  This is the recommended way to collect metrics to avoid errors when comparing metrics of different families.
 
-For advanced use the `node_exporter` can be passed an optional list of collectors to filter metrics. The `collect[]` parameter may be used multiple times.  In Prometheus configuration you can use this syntax under the [scrape config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#<scrape_config>).
+For advanced use the `libvirt_exporter` can be passed an optional list of collectors to filter metrics. The `collect[]` parameter may be used multiple times.  In Prometheus configuration you can use this syntax under the [scrape config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#<scrape_config>).
 
 ```
   params:

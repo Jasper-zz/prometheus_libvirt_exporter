@@ -155,7 +155,7 @@ func main() {
 			</body>
 			</html>`))
 	})
-	logger.Info("ListeningOn=", *listenAddress)
+	logger.Info("listeningOn=", *listenAddress)
 	logger.Fatal(http.ListenAndServe(*listenAddress, nil))
 	//
 	//log.Info("Listening on ", *listenAddress)
