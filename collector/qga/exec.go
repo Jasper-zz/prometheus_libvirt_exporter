@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/libvirt/libvirt-go"
-	"time"
 )
 
 func Exec(dom *libvirt.Domain, cmd GuestExecArg) ([]byte, error) {
@@ -24,18 +23,14 @@ func Exec(dom *libvirt.Domain, cmd GuestExecArg) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	// get exec return data, default wait 2s
-	for i := 0; i < 10; i++ {
-		data, err := execStatus(dom, retExecObj.Return.Pid)
-		if err != nil {
-			return nil, err
-		}
-		if data != nil {
-			return data, err
-		}
-		time.Sleep(200)
+	data, err := execStatus(dom, retExecObj.Return.Pid)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("failed to get exec return data.")
+	if data != nil {
+		return data, err
+	}
+	return nil, errors.New("failed to get exec return data")
 }
 
 func execStatus(dom *libvirt.Domain, pid int) ([]byte, error) {
@@ -51,9 +46,9 @@ func execStatus(dom *libvirt.Domain, pid int) ([]byte, error) {
 		return []byte{}, err
 	}
 	retExecStatusObj := retGuestExecStatus{}
-	err = json.Unmarshal([]byte(retExecStatus), &retExecStatusObj)
+	_ = json.Unmarshal([]byte(retExecStatus), &retExecStatusObj)
 
-	if retExecStatusObj.Return.Exited == false {
+	if !retExecStatusObj.Return.Exited {
 		if retExecStatusObj.Return.Exitcode != 0 {
 			errData, _ := base64.StdEncoding.DecodeString(retExecStatusObj.Return.ErrData)
 			return nil, errors.New(string(errData))

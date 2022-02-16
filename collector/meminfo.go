@@ -40,6 +40,9 @@ func newMemCollector() (Collector, error) {
 
 func (c *memCollector) Update(ch chan<- prometheus.Metric, stats *libvirt.DomainStats, uuid string, rs rpcSet) error {
 	memStats := stats.Balloon
+	if float64(memStats.Available) == 0 {
+		memStats.Available = memStats.Current
+	}
 	ch <- prometheus.MustNewConstMetric(c.memTotal,
 		prometheus.GaugeValue,
 		float64(memStats.Available),

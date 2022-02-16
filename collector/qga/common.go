@@ -85,7 +85,7 @@ func qemuAgentCommand(dom *libvirt.Domain, cmdObj interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cmdRet, err := dom.QemuAgentCommand(string(cmd), 3, 0)
+	cmdRet, err := dom.QemuAgentCommand(string(cmd), -1, 0)
 	if err != nil {
 		return "", err
 	}

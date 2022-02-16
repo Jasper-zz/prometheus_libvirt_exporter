@@ -23,6 +23,7 @@ type cpuCollector struct {
 	qgaCpuCpuTime    *prometheus.Desc
 	qgaCpuUserTime   *prometheus.Desc
 	qgaCpuStealTime  *prometheus.Desc
+	qgaCpuIowait     *prometheus.Desc
 }
 
 func init() {
@@ -77,6 +78,10 @@ func newCPUCollector() (Collector, error) {
 			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "qga_steal_time"),
 			"",
 			[]string{"uuid"}, nil),
+		qgaCpuIowait: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, cpuCollectorSubsystem, "qga_iowait"),
+			"",
+			[]string{"uuid"}, nil),
 	}
 
 	return c, nil
@@ -121,6 +126,10 @@ func (c *cpuCollector) Update(ch chan<- prometheus.Metric, stats *libvirt.Domain
 		ch <- prometheus.MustNewConstMetric(c.qgaCpuStealTime,
 			prometheus.GaugeValue,
 			float64(s.CPUTotal.Steal),
+			uuid)
+		ch <- prometheus.MustNewConstMetric(c.qgaCpuIowait,
+			prometheus.GaugeValue,
+			float64(s.CPUTotal.Iowait),
 			uuid)
 		ch <- prometheus.MustNewConstMetric(c.qgaCpuUserTime,
 			prometheus.GaugeValue,

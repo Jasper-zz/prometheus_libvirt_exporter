@@ -7,7 +7,7 @@ import (
 )
 
 func ReadFile(dom *libvirt.Domain, path string) ([]byte, error) {
-	cpuStatAll := []byte{}
+	data := []byte{}
 
 	// open file, return file handle
 	fileOpenObj := fileOpen{"guest-file-open",
@@ -58,12 +58,12 @@ func ReadFile(dom *libvirt.Domain, path string) ([]byte, error) {
 		if err != nil {
 			return []byte{}, nil
 		}
-		cpuStat, err := base64.StdEncoding.DecodeString(retReadObj.Return.Bufb64)
-		cpuStatAll = append(cpuStatAll, cpuStat...)
+		contentSlice, _ := base64.StdEncoding.DecodeString(retReadObj.Return.Bufb64)
+		data = append(data, contentSlice...)
 		if retReadObj.Return.Eof {
 			break
 		}
 	}
 
-	return cpuStatAll, nil
+	return data, nil
 }

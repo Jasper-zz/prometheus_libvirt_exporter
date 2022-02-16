@@ -158,7 +158,7 @@ func (l *LibvirtCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func GetRpcSet(dom *libvirt.Domain) (rpcSet, error) {
-	rs := rpcSet{true, true}
+	rs := rpcSet{false, false}
 	cmdSet, err := dom.QemuAgentCommand("{\"execute\":\"guest-info\"}", 1, 0)
 	if err != nil {
 		return rs, err
@@ -168,6 +168,7 @@ func GetRpcSet(dom *libvirt.Domain) (rpcSet, error) {
 	if err != nil {
 		return rs, err
 	}
+	rs = rpcSet{true, true}
 	for _, cmd := range sc.Return.SupportedCommands {
 		if cmd.Name == "guest-file-read" || cmd.Name == "guest-file-open" || cmd.Name == "guest-file-close" {
 			if !cmd.Enabled {
